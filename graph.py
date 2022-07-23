@@ -5,7 +5,7 @@ import numpy as np
 
 class Graph():
 	"""
-	A class for the Rapidly-Exploring Random Tree (RRT).
+	A class for the Probabilistic RoadMap (PRM).
 	
 	Attributes
 	----------
@@ -22,8 +22,10 @@ class Graph():
 		self.x_goal = goal
 
 		self.WIDTH, self.HEIGHT = map_dimensions
+		self.MAX_NODES = 100
 
-		self.MAX_NODES = 10
+		self.obstacles = None
+
 		# Colors 
 		self.WHITE = (255, 255, 255)
 		self.BLACK = (0, 0, 0)
@@ -137,6 +139,24 @@ class Graph():
 			near.append(graph[min_distances[i]])
 
 		return near
+
+	def cross_obstacle(self, p1, p2):
+		obs = self.obstacles.copy()
+		
+		p11, p12 = p1[0], p1[1]
+		p21, p22 = p2[0], p2[1]
+
+		while len(obs) > 0:
+			rectangle = obs.pop(0)
+			# Interpolation
+			for i in range(0, 101):
+				u = i / 100
+				x = p11 * u + p21 * (1 - u)
+				y = p12 * u + p22 * (1 - u)
+				if rectangle.collidepoint(x, y):
+					return True
+
+		return False
 
 	def draw_random_node(self, map_):
 		"""Draws the x_rand node."""

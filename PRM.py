@@ -19,9 +19,11 @@ def main():
 	clock = pygame.time.Clock()
 	obstacles = environment_.draw_obstacles()
 	configurations = []
+	graph_.obstacles = obstacles
+	is_simulation_finished = False
 
 	n = 0 # Number of nodes to put in the roadmap
-	k = 3 # Number of the closest neighbors to examine for each configuration
+	k = 5 # Number of the closest neighbors to examine for each configuration
 
 	while run:
 		# Make sure the loop runs at 60 FPS
@@ -38,17 +40,23 @@ def main():
 			graph_.draw_random_node(map_=environment_.map)
 			configurations.append(x_rand)
 
-		if not sampling:
+		if not sampling and not is_simulation_finished:
 			for configuration in configurations:
 				# Remove the current configuration 
 				new_configurations = configurations.copy()
 				new_configurations.remove(configuration)
 				x_near = graph_.nearest_neighbor(graph=new_configurations, 
 					x_rand=configuration, k=k)
-				for i in range(k):
-					pygame.draw.line(surface=environment_.map, color=(0, 0, 255)
-						, start_pos=configuration, end_pos=x_near[i])
 
+				for i in range(k):
+					cross_obstacle = graph_.cross_obstacle(p1=configuration,
+						p2=x_near[i])
+					if not cross_obstacle:
+						pygame.draw.line(surface=environment_.map,
+							color=(0, 0, 255), start_pos=configuration,
+							end_pos=x_near[i])
+
+			is_simulation_finished = True
 
 		n += 1 # Counter for the maximum allowed nodes		
 		pygame.display.update()
