@@ -23,10 +23,9 @@ def main():
 	is_simulation_finished = False
 
 	n = 0 # Number of nodes to put in the roadmap
-	k = 5 # Number of the closest neighbors to examine for each configuration
+	k = 7 # Number of the closest neighbors to examine for each configuration
 
 	while run:
-		# Make sure the loop runs at 60 FPS
 		clock.tick(environment_.FPS) 
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
@@ -34,7 +33,7 @@ def main():
 
 		x_rand = graph_.generate_random_node()
 		collision_free = graph_.is_free(point=x_rand, obstacles=obstacles)
-		sampling = n <= graph_.MAX_NODES # Sampling time
+		sampling = n < graph_.MAX_NODES # Sampling time
 
 		if collision_free and sampling:
 			graph_.draw_random_node(map_=environment_.map)
@@ -45,17 +44,17 @@ def main():
 				# Remove the current configuration 
 				new_configurations = configurations.copy()
 				new_configurations.remove(configuration)
-				x_near = graph_.nearest_neighbor(graph=new_configurations, 
-					x_rand=configuration, k=k)
+				near = graph_.k_nearest(graph=new_configurations, # k-nearest
+					x_rand=configuration, configuration=configuration, k=k)
 
 				for i in range(k):
 					cross_obstacle = graph_.cross_obstacle(p1=configuration,
-						p2=x_near[i])
+						p2=near[i])
 					if not cross_obstacle:
-						pygame.draw.line(surface=environment_.map,
-							color=(0, 0, 255), start_pos=configuration,
-							end_pos=x_near[i])
+						graph_.draw_local_planner(p1=configuration, p2=near[i],
+							map_=environment_.map)
 
+			graph_.a_star(nodes=configurations, map_=environment_.map)
 			is_simulation_finished = True
 
 		n += 1 # Counter for the maximum allowed nodes		

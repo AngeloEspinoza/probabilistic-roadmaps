@@ -2,6 +2,7 @@ import pygame
 import random
 import math
 import numpy as np
+import queue
 
 class Graph():
 	"""
@@ -22,7 +23,8 @@ class Graph():
 		self.x_goal = goal
 
 		self.WIDTH, self.HEIGHT = map_dimensions
-		self.MAX_NODES = 100
+		self.MAX_NODES = 400
+		self.neighbors = {}
 
 		self.obstacles = None
 
@@ -34,6 +36,9 @@ class Graph():
 		self.BLUE = (0, 0, 255)
 		self.BROWN = (189, 154, 122)
 		self.YELLOW = (255, 255, 0)
+		self.TURQUOISE = (64, 224, 208)
+		self.FUCSIA = (255, 0, 255)
+
 
 	def is_free(self, point, obstacles, tree=None):
 		"""Checks whether a node is colliding with an obstacle or not.
@@ -56,7 +61,6 @@ class Graph():
 		"""
 		for obstacle in obstacles:
 			if obstacle.collidepoint(point):
-				# tree.remove(point)
 				return False
 
 		return True
@@ -78,9 +82,9 @@ class Graph():
 		"""
 		x, y = random.uniform(0, self.WIDTH),\
 		random.uniform(0, self.HEIGHT)
-		self.x_rand = x, y # To use within the class
+		self.x_rand = int(x), int(y) # To use within the class
 
-		return x, y
+		return self.x_rand
 
 	def euclidean_distance(self, p1, p2):
 		"""Euclidean distance between two points.
@@ -97,13 +101,12 @@ class Graph():
 		float
 			Euclidean distance metric.
 		"""
-		return  math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+		return  int(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2))
 
-	def nearest_neighbor(self, graph, x_rand, k=2):
-		"""Returns the index of the nearest neighbor.
+	def k_nearest(self, graph, x_rand, configuration, k=2):
+		"""Given k, it returns the k-nearest neighbors of x_rand.
 		
-		The nearest neighbor from all the nodes in the graph
-		to the randomly generated node.
+		Searches in the graph the k-nearest neighbors.
 
 		Parameters
 		----------
@@ -111,6 +114,8 @@ class Graph():
 			Graph containing all the coordinate nodes.
 		x_rand : tuple 
 			Coordinate of the random node generated.
+		configuration : tuple
+			Current configuration to be search its k-neighbors.
 		k : int
 			Number of the closest neighbors to examine for each configuration.
 
@@ -131,16 +136,35 @@ class Graph():
 		x_near = graph[self.min_distance]
 
 		# Indices of the k-smallest distances 
-		distances = np.asarray(distances.copy())
-		min_distances = np.argpartition(distances, k)
+		self.distances = np.asarray(distances.copy())
+		self.min_distances = np.argpartition(distances, k)
 
 		# Get the k-smallest values from the graph
 		for i in range(k):
-			near.append(graph[min_distances[i]])
+			near.append(graph[self.min_distances[i]])
+
+		self.neighbors.update({configuration: near})
 
 		return near
 
 	def cross_obstacle(self, p1, p2):
+		""" Checks whether a line crosses and obstacle or not.
+
+		Given two points p1, p2 an interpolation between 
+		such two points is done to check if any of the
+		points in between lie on the obstacle.
+
+		Parameters
+		----------
+		p1 : tuple 
+			Initial point.
+		p2 : tuple 
+			End point.
+
+		Returns
+		-------
+		bool
+		"""
 		obs = self.obstacles.copy()
 		
 		p11, p12 = p1[0], p1[1]
@@ -158,7 +182,95 @@ class Graph():
 
 		return False
 
+	def a_star(self, start=(50, 50), end=(540, 380), nodes=None, map_=None):
+		""" A star algorithm.
+
+		A star algorithm for pathfinding in the graph.
+
+		start : tuple
+			Start node.
+		end : tuple
+			End node.
+		nodes : list
+			Collection of nodes in the graph.
+		map_ : pygame.Surface
+			Environment to draw on.
+		"""		
+		self.start = (nodes[0])
+		self.end = nodes[-1]
+
+		self.draw_initial_node(map_=map_, n=self.start)
+		self.draw_goal_node(map_=map_, n=self.end)
+
+		open_set = queue.PriorityQueue()
+		open_set.put((0, self.start)) # (f_score, start)
+		came_from = {}
+
+		# Initialize to infinity all g-score and f-score nodes but the start 
+		g_score = {node: float('inf') for node in nodes}
+		g_score[self.start] = 0
+		f_score = {node: float('inf') for node in nodes}
+		f_score[self.start] = self.heuristic(self.start, self.end)
+		open_set_hash = {self.start}
+
+		while not open_set.empty(): 
+			current = open_set.get()[1]
+			open_set_hash.remove(current)
+
+
+			if current == self.end:
+				self.reconstruct_path(came_from, current, map_)
+				return True
+			
+			# k-neighbors
+			for neighbor in self.neighbors[current]:
+				temp_g_score = g_score[current] + self.euclidean_distance(current, neighbor)
+
+				if temp_g_score < g_score[neighbor]:
+					came_from[neighbor] = current
+					g_score[neighbor] = temp_g_score
+					f_score[neighbor] = temp_g_score + self.heuristic(neighbor, end)
+
+					if neighbor not in open_set_hash:
+						open_set.put((f_score[neighbor], neighbor))
+						open_set_hash.add(neighbor)
+
+	def reconstruct_path(self, came_from, current, map_):
+		paths = []
+
+		while current in came_from:
+			current = came_from[current]
+			paths.append(current)
+
+		pygame.draw.line(surface=map_,
+			color=(255, 0, 0), start_pos=self.end,
+			end_pos=paths[0])
+
+		for i in range(len(paths)-1):
+			pygame.draw.line(surface=map_,
+				color=(255, 0, 0), start_pos=paths[i],
+				end_pos=paths[i+1])
+		
+	def heuristic(self, p1, p2):
+		"""Heuristic distance from point to point."""
+		return self.euclidean_distance(p1, p2)
+
 	def draw_random_node(self, map_):
 		"""Draws the x_rand node."""
 		pygame.draw.circle(surface=map_, color=self.GREEN, 
 			center=self.x_rand, radius=3)
+
+	def draw_initial_node(self, map_, n):
+		"""Draws the x_init node."""
+		pygame.draw.circle(surface=map_, color=self.RED, 
+			center=n, radius=3)
+
+	def draw_goal_node(self, map_, n):
+		"""Draws the x_goal node."""
+		pygame.draw.circle(surface=map_, color=self.FUCSIA, 
+			center=n, radius=3)
+
+	def draw_local_planner(self, p1, p2, map_):
+		"""Draws the local planner from node to node."""
+		pygame.draw.line(surface=map_, color=self.BLUE,
+			start_pos=p1, end_pos=p2)
