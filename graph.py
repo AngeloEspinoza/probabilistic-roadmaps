@@ -23,7 +23,7 @@ class Graph():
 		self.x_goal = goal
 
 		self.WIDTH, self.HEIGHT = map_dimensions
-		self.MAX_NODES = 400
+		self.MAX_NODES = 100
 		self.neighbors = {}
 
 		self.obstacles = None
@@ -147,7 +147,7 @@ class Graph():
 
 		return near
 
-	def cross_obstacle(self, p1, p2):
+	def cross_obstacle(self, p1, p2, map_=None):
 		""" Checks whether a line crosses and obstacle or not.
 
 		Given two points p1, p2 an interpolation between 
@@ -177,6 +177,7 @@ class Graph():
 				u = i / 100
 				x = p11 * u + p21 * (1 - u)
 				y = p12 * u + p22 * (1 - u)
+
 				if rectangle.collidepoint(x, y):
 					return True
 
@@ -196,8 +197,8 @@ class Graph():
 		map_ : pygame.Surface
 			Environment to draw on.
 		"""		
-		self.start = (nodes[0])
-		self.end = nodes[-1]
+		self.start = self.x_init
+		self.end = self.x_goal
 
 		self.draw_initial_node(map_=map_, n=self.start)
 		self.draw_goal_node(map_=map_, n=self.end)
@@ -205,6 +206,7 @@ class Graph():
 		open_set = queue.PriorityQueue()
 		open_set.put((0, self.start)) # (f_score, start)
 		came_from = {}
+		last_current = (0, 0)
 
 		# Initialize to infinity all g-score and f-score nodes but the start 
 		g_score = {node: float('inf') for node in nodes}
@@ -217,16 +219,16 @@ class Graph():
 			current = open_set.get()[1]
 			open_set_hash.remove(current)
 
-
 			if current == self.end:
 				self.reconstruct_path(came_from, current, map_)
 				return True
 			
-			# k-neighbors
+			# k-nearest
 			for neighbor in self.neighbors[current]:
 				temp_g_score = g_score[current] + self.euclidean_distance(current, neighbor)
+				cross_obstacle = self.cross_obstacle(p1=current, p2=neighbor)
 
-				if temp_g_score < g_score[neighbor]:
+				if temp_g_score < g_score[neighbor] and not cross_obstacle:
 					came_from[neighbor] = current
 					g_score[neighbor] = temp_g_score
 					f_score[neighbor] = temp_g_score + self.heuristic(neighbor, end)
@@ -234,6 +236,8 @@ class Graph():
 					if neighbor not in open_set_hash:
 						open_set.put((f_score[neighbor], neighbor))
 						open_set_hash.add(neighbor)
+
+				last_current = current
 
 	def reconstruct_path(self, came_from, current, map_):
 		paths = []
@@ -244,12 +248,12 @@ class Graph():
 
 		pygame.draw.line(surface=map_,
 			color=(255, 0, 0), start_pos=self.end,
-			end_pos=paths[0])
+			end_pos=paths[0], width=4)
 
 		for i in range(len(paths)-1):
 			pygame.draw.line(surface=map_,
 				color=(255, 0, 0), start_pos=paths[i],
-				end_pos=paths[i+1])
+				end_pos=paths[i+1], width=4)
 		
 	def heuristic(self, p1, p2):
 		"""Heuristic distance from point to point."""
@@ -262,15 +266,15 @@ class Graph():
 
 	def draw_initial_node(self, map_, n):
 		"""Draws the x_init node."""
-		pygame.draw.circle(surface=map_, color=self.RED, 
-			center=n, radius=3)
+		pygame.draw.circle(surface=map_, color=self.BLUE, 
+			center=n, radius=4)
 
 	def draw_goal_node(self, map_, n):
 		"""Draws the x_goal node."""
-		pygame.draw.circle(surface=map_, color=self.FUCSIA, 
-			center=n, radius=3)
+		pygame.draw.circle(surface=map_, color=self.RED, 
+			center=n, radius=4)
 
 	def draw_local_planner(self, p1, p2, map_):
 		"""Draws the local planner from node to node."""
-		pygame.draw.line(surface=map_, color=self.BLUE,
+		pygame.draw.line(surface=map_, color=self.BLACK,
 			start_pos=p1, end_pos=p2)

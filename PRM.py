@@ -7,7 +7,7 @@ MAP_DIMENSIONS = 640, 480
 
 # Initial and final position of the robots
 x_init = 50, 50
-x_goal = 540, 380
+x_goal = 540, 50
 
 # Instantiating the environment and the graph
 environment_ = environment.Environment(dimensions=MAP_DIMENSIONS)
@@ -19,11 +19,13 @@ def main():
 	clock = pygame.time.Clock()
 	obstacles = environment_.draw_obstacles()
 	configurations = []
+	configurations.append(x_init)
+	configurations.append(x_goal)
 	graph_.obstacles = obstacles
 	is_simulation_finished = False
 
 	n = 0 # Number of nodes to put in the roadmap
-	k = 7 # Number of the closest neighbors to examine for each configuration
+	k = 20 # Number of the closest neighbors to examine for each configuration
 
 	while run:
 		clock.tick(environment_.FPS) 
@@ -49,7 +51,7 @@ def main():
 
 				for i in range(k):
 					cross_obstacle = graph_.cross_obstacle(p1=configuration,
-						p2=near[i])
+						p2=near[i], map_=environment_.map)
 					if not cross_obstacle:
 						graph_.draw_local_planner(p1=configuration, p2=near[i],
 							map_=environment_.map)
