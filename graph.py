@@ -248,7 +248,6 @@ class Graph():
 			paths.append(current)
 
 		self.draw_paths(paths, map_)
-
 	
 	def draw_paths(self, paths, map_):
 		"""Draw the path on the map."""
