@@ -32,7 +32,7 @@ options:
 ```
 
  ## Examples
-Generate obstacles in the map and show the random nodes
+Generate obstacles in the map and show the random nodes $x_{rand}$
  
  ```python3 PRM.py --obstacles --show_random_nodes```
  
