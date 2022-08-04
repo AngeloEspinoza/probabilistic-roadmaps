@@ -148,7 +148,7 @@ class Graph():
 		return near
 
 	def cross_obstacle(self, p1, p2, map_=None):
-		""" Checks whether a line crosses and obstacle or not.
+		"""Checks whether a line crosses and obstacle or not.
 
 		Given two points p1, p2 an interpolation between 
 		such two points is done to check if any of the
@@ -184,7 +184,7 @@ class Graph():
 		return False
 
 	def a_star(self, start=(50, 50), end=(540, 380), nodes=None, map_=None):
-		""" A star algorithm.
+		"""A star algorithm.
 
 		A star algorithm for pathfinding in the graph.
 
@@ -240,12 +240,18 @@ class Graph():
 				last_current = current
 
 	def reconstruct_path(self, came_from, current, map_):
+		"""Reconstruct the path from point A to B."""
 		paths = []
 
 		while current in came_from:
 			current = came_from[current]
 			paths.append(current)
 
+		self.draw_paths(paths, map_)
+
+	
+	def draw_paths(self, paths, map_):
+		"""Draw the path on the map."""
 		pygame.draw.line(surface=map_,
 			color=(255, 0, 0), start_pos=self.end,
 			end_pos=paths[0], width=4)

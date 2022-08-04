@@ -24,7 +24,7 @@ def main():
 	graph_.obstacles = obstacles
 	is_simulation_finished = False
 
-	n = 0 # Number of nodes to put in the roadmap
+	n = 10 # Number of nodes to put in the roadmap
 	k = 20 # Number of the closest neighbors to examine for each configuration
 
 	while run:
