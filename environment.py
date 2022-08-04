@@ -10,7 +10,7 @@ class Environment():
 		The X and Y window dimensions.
 	"""
 	
-	def __init__(self, dimensions):
+	def __init__(self, map_dimensions):
 		# Colors 
 		self.WHITE = (255, 255, 255)
 		self.BLACK = (0, 0, 0)
@@ -22,7 +22,7 @@ class Environment():
 		self.GRAY = (105, 105, 105)
 
 		# Map dimensions
-		self.WIDTH, self.HEIGHT = dimensions[0], dimensions[1] 
+		self.WIDTH, self.HEIGHT = map_dimensions
 
 		# Window settings
 		self.FPS = 120
