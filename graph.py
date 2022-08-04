@@ -197,29 +197,29 @@ class Graph():
 		map_ : pygame.Surface
 			Environment to draw on.
 		"""		
-		self.start = self.x_init
-		self.end = self.x_goal
+		# self.x_init = self.x_init
+		# self.x_goal = self.x_goal
 
-		self.draw_initial_node(map_=map_, n=self.start)
-		self.draw_goal_node(map_=map_, n=self.end)
+		self.draw_initial_node(map_=map_)
+		self.draw_goal_node(map_=map_)
 
 		open_set = queue.PriorityQueue()
-		open_set.put((0, self.start)) # (f_score, start)
+		open_set.put((0, self.x_init)) # (f_score, start)
 		came_from = {}
 		last_current = (0, 0)
 
 		# Initialize to infinity all g-score and f-score nodes but the start 
 		g_score = {node: float('inf') for node in nodes}
-		g_score[self.start] = 0
+		g_score[self.x_init] = 0
 		f_score = {node: float('inf') for node in nodes}
-		f_score[self.start] = self.heuristic(self.start, self.end)
-		open_set_hash = {self.start}
+		f_score[self.x_init] = self.heuristic(self.x_init, self.x_goal)
+		open_set_hash = {self.x_init}
 
 		while not open_set.empty(): 
 			current = open_set.get()[1]
 			open_set_hash.remove(current)
 
-			if current == self.end:
+			if current == self.x_goal:
 				self.reconstruct_path(came_from, current, map_)
 				return True
 			
@@ -252,7 +252,7 @@ class Graph():
 	def draw_paths(self, paths, map_):
 		"""Draw the path on the map."""
 		pygame.draw.line(surface=map_,
-			color=(255, 0, 0), start_pos=self.end,
+			color=(255, 0, 0), start_pos=self.x_goal,
 			end_pos=paths[0], width=4)
 
 		for i in range(len(paths)-1):
@@ -269,15 +269,15 @@ class Graph():
 		pygame.draw.circle(surface=map_, color=self.GREEN, 
 			center=self.x_rand, radius=3)
 
-	def draw_initial_node(self, map_, n):
+	def draw_initial_node(self, map_):
 		"""Draws the x_init node."""
 		pygame.draw.circle(surface=map_, color=self.BLUE, 
-			center=n, radius=4)
+			center=self.x_init, radius=4)
 
-	def draw_goal_node(self, map_, n):
+	def draw_goal_node(self, map_):
 		"""Draws the x_goal node."""
 		pygame.draw.circle(surface=map_, color=self.RED, 
-			center=n, radius=4)
+			center=self.x_goal, radius=4)
 
 	def draw_local_planner(self, p1, p2, map_):
 		"""Draws the local planner from node to node."""

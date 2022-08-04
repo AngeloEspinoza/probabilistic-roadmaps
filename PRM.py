@@ -2,6 +2,7 @@ import pygame
 import environment 
 import graph
 import argparse
+import sys
 
 # Command line arguments
 parser = argparse.ArgumentParser(description='Implements the PRM algorithm for path planning.')
@@ -22,7 +23,7 @@ args = parser.parse_args()
 # Constants
 MAP_DIMENSIONS = 640, 480
 
-# Initial and final position of the robots
+# Initial and final position of the robot
 x_init = tuple(args.x_init) if args.x_init is not None else (50, 50)
 x_goal = tuple(args.x_goal) if args.x_goal is not None else (540, 380)
 
@@ -82,6 +83,9 @@ def main():
 
 		n += 1 # Counter for the maximum allowed nodes		
 		pygame.display.update()
+
+	pygame.quit()
+	sys.exit()
 
 if __name__ == '__main__':
 	main()
