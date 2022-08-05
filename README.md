@@ -5,7 +5,7 @@
 
 ## Description
 A 2D simulation in the framework Pygame of the paper [Probabilistic roadmaps for path planning in high-dimensional configuration spaces](https://dspace.library.uu.nl/bitstream/handle/1874/17328/kavraki_94_probabilistic.pdf?sequence=1%22).
-The environment has 2 non-convex obstacles that can be used or not. It also uses the A* algorithm to find the more suitable an optimal path from the forest created by the PRM. 
+The environment has 2 non-convex obstacles that can be used or not. It also uses the __A* algorithm__ to find the more suitable an optimal path from the forest created by the PRM. 
 
 ## Usage
 
@@ -32,11 +32,11 @@ options:
 ```
 
  ## Examples
-Generate obstacles in the map and show the random nodes $x_{rand}$
+Generate obstacles in the map and show the random nodes $\mathbf{x_{\mathit{rand}}}$
  
  ```python3 PRM.py --obstacles --show_random_nodes```
  
- No obstacles, initial configuration $x_{init} = (300, 300)$ and goal configuration $x_{goal} = (50, 100)$
+ No obstacles, initial configuration $\mathbf{x_{\mathit{init}}} = (300, 300)$ and goal configuration $\mathbf{x_{\mathit{goal}}} = (50, 100)$
  
  ```python3 PRM.py --no-obstacles --x_init 300, 300 --x_goal 50, 100```
  
