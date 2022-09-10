@@ -14,11 +14,14 @@ parser.add_argument('-goal', '--x_goal', nargs='+', type=int, metavar='', requir
 	help='Goal node position in X and Y respectively')
 parser.add_argument('-srn', '--show_random_nodes', type=bool, action=argparse.BooleanOptionalAction,
 	metavar='', required=False, help='Show random nodes on screen')
-parser.add_argument('-n', '--nodes', type=int, metavar='', required=False,
+parser.add_argument('-n', '--nodes', type=int, metavar='', required=False, default=100,
 	help='Number of nodes to put in the roadmap')
 parser.add_argument('-k', '--k_nearest', type=int, metavar='', required=False,
 	help='Number of the closest neighbors to examine for each configuration')
 args = parser.parse_args()
+
+# Initialization 
+pygame.init()
 
 # Constants
 MAP_DIMENSIONS = 640, 480
@@ -43,7 +46,7 @@ def main():
 	is_simulation_finished = False
 
 	 # Number of nodes to put in the roadmap
-	n = args.nodes if args.nodes is not None else 10
+	n = 0
 
 	# Number of the closest neighbors to examine for each configuration
 	k = args.k_nearest if args.k_nearest is not None else 15 
@@ -56,12 +59,13 @@ def main():
 
 		x_rand = graph_.generate_random_node()
 		collision_free = graph_.is_free(point=x_rand, obstacles=obstacles)
-		sampling = n < graph_.MAX_NODES # Sampling time
+		sampling = n < args.nodes # Sampling time
 
 		if collision_free and sampling:
 			if args.show_random_nodes:
 				graph_.draw_random_node(map_=environment_.map)
 			configurations.append(x_rand)
+			n += 1 # Counter for the maximum allowed nodes		
 
 		if not sampling and not is_simulation_finished:
 			for configuration in configurations:
@@ -81,7 +85,6 @@ def main():
 			graph_.a_star(nodes=configurations, map_=environment_.map)
 			is_simulation_finished = True
 
-		n += 1 # Counter for the maximum allowed nodes		
 		pygame.display.update()
 
 	pygame.quit()

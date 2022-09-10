@@ -23,7 +23,6 @@ class Graph():
 		self.x_goal = goal
 
 		self.WIDTH, self.HEIGHT = map_dimensions
-		self.MAX_NODES = 100
 		self.neighbors = {}
 
 		self.obstacles = None
@@ -247,12 +246,11 @@ class Graph():
 			current = came_from[current]
 			paths.append(current)
 
-		self.draw_paths(paths, map_)
+		self.draw_path_to_goal(paths, map_)
 	
-	def draw_paths(self, paths, map_):
-		"""Draw the path on the map."""
-		pygame.draw.line(surface=map_,
-			color=(255, 0, 0), start_pos=self.x_goal,
+	def draw_path_to_goal(self, paths, map_):
+		"""Draws the path from the x_goal node to the x_init node."""
+		pygame.draw.line(surface=map_, color=(255, 0, 0), start_pos=self.x_goal, 
 			end_pos=paths[0], width=4)
 
 		for i in range(len(paths)-1):
