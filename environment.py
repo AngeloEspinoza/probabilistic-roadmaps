@@ -96,7 +96,6 @@ class Environment():
 	def draw_obstacles(self):
 		"""Draw each side of the obstacles."""
 		obstacles = []
-		self.make_obstacles()
 
 		for obstacle in self.obstacles:
 			for side in obstacle:

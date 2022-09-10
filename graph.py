@@ -26,6 +26,7 @@ class Graph():
 		self.neighbors = {}
 
 		self.obstacles = None
+		self.smooth_path = []
 
 		# Colors 
 		self.WHITE = (255, 255, 255)
@@ -146,7 +147,20 @@ class Graph():
 
 		return near
 
-	def cross_obstacle(self, p1, p2, map_=None):
+	def interpolation(self, p1, p2):
+		p11, p12 = p1[0], p1[1]
+		p21, p22 = p2[0], p2[1]
+		coordinates = []
+
+		for i in range(0, 101):
+			u = i / 100
+			x = p11 * u + p21 * (1 - u)
+			y = p12 * u + p22 * (1 - u)
+			coordinates.append((x, y))
+
+		return coordinates
+
+	def cross_obstacle(self, p1, p2):
 		"""Checks whether a line crosses and obstacle or not.
 
 		Given two points p1, p2 an interpolation between 
@@ -196,9 +210,6 @@ class Graph():
 		map_ : pygame.Surface
 			Environment to draw on.
 		"""		
-		# self.x_init = self.x_init
-		# self.x_goal = self.x_goal
-
 		self.draw_initial_node(map_=map_)
 		self.draw_goal_node(map_=map_)
 
@@ -240,24 +251,28 @@ class Graph():
 
 	def reconstruct_path(self, came_from, current, map_):
 		"""Reconstruct the path from point A to B."""
-		paths = []
+		self.path_coordinates = []
+		self.path_coordinates.append(self.x_goal)
 
 		while current in came_from:
 			current = came_from[current]
-			paths.append(current)
+			self.path_coordinates.append(current)
 
-		self.draw_path_to_goal(paths, map_)
+		self.draw_path_to_goal(map_)
 	
-	def draw_path_to_goal(self, paths, map_):
+	def draw_path_to_goal(self, map_):
 		"""Draws the path from the x_goal node to the x_init node."""
-		pygame.draw.line(surface=map_, color=(255, 0, 0), start_pos=self.x_goal, 
-			end_pos=paths[0], width=4)
+		for i in range(len(self.path_coordinates)-1):
+			interpolation = self.interpolation(p1=self.path_coordinates[i],
+				p2=self.path_coordinates[i+1])
+			self.smooth_path.append(interpolation)
+			pygame.draw.line(surface=map_, color=(255, 0, 0), start_pos=self.path_coordinates[i],
+				end_pos=self.path_coordinates[i+1], width=4)
 
-		for i in range(len(paths)-1):
-			pygame.draw.line(surface=map_,
-				color=(255, 0, 0), start_pos=paths[i],
-				end_pos=paths[i+1], width=4)
-		
+		# Flat smooth path list
+		self.smooth = [coordinate for coordinates in self.smooth_path[::-1] for coordinate in coordinates]
+		self.smooth_path = []
+
 	def heuristic(self, p1, p2):
 		"""Heuristic distance from point to point."""
 		return self.euclidean_distance(p1, p2)
@@ -281,3 +296,38 @@ class Graph():
 		"""Draws the local planner from node to node."""
 		pygame.draw.line(surface=map_, color=self.BLACK,
 			start_pos=p1, end_pos=p2)
+
+	def move_robot(self, position, map_):
+		"""Draws the robot moving at the given position."""
+		pygame.draw.circle(surface=map_, color=(0, 0, 255),	center=position, radius=4)
+
+	def draw_roadmap(self, configurations, nears, map_, k):
+		"""Draws the roadmap constantly. Used to display it in an infinite loop."""
+		for i, near in enumerate(nears):
+			for j in range(len(near)):
+				self.draw_local_planner(p1=configurations[i], p2=nears[i][j], map_=map_)
+
+	def draw_trajectory(self, configurations, nears, environment, obstacles, k, keep_tree):
+		"""Draws the robot moving in the map."""
+		for i in range(len(self.smooth)):
+			robot_position = self.smooth[i]
+
+			if obstacles != []:
+				environment.draw_obstacles()
+
+			# Draw inital and final robot configuration
+			self.draw_initial_node(map_=environment.map)
+			self.draw_goal_node(map_=environment.map)
+
+			if keep_tree:
+				self.draw_roadmap(configurations=configurations, nears=nears, map_=environment.map,
+					k=k)
+			
+			# Draw path to goal, and the robot movement
+			self.draw_path_to_goal(map_=environment.map)		
+			self.move_robot(position=robot_position, map_=environment.map)
+
+			# Refresh the screen
+			pygame.display.update()
+			pygame.time.delay(20)
+			environment.map.fill(self.WHITE)

@@ -18,6 +18,8 @@ parser.add_argument('-n', '--nodes', type=int, metavar='', required=False, defau
 	help='Number of nodes to put in the roadmap')
 parser.add_argument('-k', '--k_nearest', type=int, metavar='', required=False,
 	help='Number of the closest neighbors to examine for each configuration')
+parser.add_argument('-kt', '--keep_tree', type=bool, action=argparse.BooleanOptionalAction, 
+	metavar='', required=False, help='Keeps the tree while the robot is moving towards the goal')
 args = parser.parse_args()
 
 # Initialization 
@@ -38,12 +40,17 @@ graph_ = graph.Graph(start=x_init, goal=x_goal,
 def main():
 	run = True
 	clock = pygame.time.Clock()
-	obstacles = environment_.draw_obstacles() if args.obstacles is True else []
 	configurations = []
+	nears = []
+	success_configurations = []
+	success_nears = []
 	configurations.append(x_init)
 	configurations.append(x_goal)
+	environment_.make_obstacles()
+	obstacles = environment_.draw_obstacles() if args.obstacles else []
 	graph_.obstacles = obstacles
 	is_simulation_finished = False
+	is_configuration_free = True
 
 	 # Number of nodes to put in the roadmap
 	n = 0
@@ -57,6 +64,7 @@ def main():
 			if event.type == pygame.QUIT:
 				run = False
 
+		obstacles = environment_.draw_obstacles() if args.obstacles else []
 		x_rand = graph_.generate_random_node()
 		collision_free = graph_.is_free(point=x_rand, obstacles=obstacles)
 		sampling = n < args.nodes # Sampling time
@@ -76,14 +84,26 @@ def main():
 					x_rand=configuration, configuration=configuration, k=k)
 
 				for i in range(k):
-					cross_obstacle = graph_.cross_obstacle(p1=configuration,
-						p2=near[i], map_=environment_.map)
+					cross_obstacle = graph_.cross_obstacle(p1=configuration, p2=near[i])
 					if not cross_obstacle:
 						graph_.draw_local_planner(p1=configuration, p2=near[i],
 							map_=environment_.map)
+						nears.append(near[i])
+
+						if is_configuration_free: 
+							success_configurations.append(configuration)
+							is_configuration_free = False
+
+				success_nears.append(nears)
+				nears = []			
+				is_configuration_free = True
 
 			graph_.a_star(nodes=configurations, map_=environment_.map)
 			is_simulation_finished = True
+
+		if is_simulation_finished:
+			graph_.draw_trajectory(configurations=success_configurations, nears=success_nears, 
+				environment=environment_, obstacles=obstacles, k=k, keep_tree=args.keep_tree)
 
 		pygame.display.update()
 
