@@ -18,8 +18,10 @@ parser.add_argument('-n', '--nodes', type=int, metavar='', required=False, defau
 	help='Number of nodes to put in the roadmap')
 parser.add_argument('-k', '--k_nearest', type=int, metavar='', required=False,
 	help='Number of the closest neighbors to examine for each configuration')
-parser.add_argument('-kt', '--keep_tree', type=bool, action=argparse.BooleanOptionalAction, 
+parser.add_argument('-kt', '--keep_roadmap', type=bool, action=argparse.BooleanOptionalAction, 
 	metavar='', required=False, help='Keeps the tree while the robot is moving towards the goal')
+parser.add_argument('-r', '--radius', type=int, metavar='', required=False, default=10,
+	help='Set the robot radius')
 args = parser.parse_args()
 
 # Initialization 
@@ -35,7 +37,7 @@ x_goal = tuple(args.x_goal) if args.x_goal is not None else (540, 380)
 # Instantiating the environment and the graph
 environment_ = environment.Environment(map_dimensions=MAP_DIMENSIONS)
 graph_ = graph.Graph(start=x_init, goal=x_goal, 
-		map_dimensions=MAP_DIMENSIONS)
+		map_dimensions=MAP_DIMENSIONS, radius=args.radius)
 
 def main():
 	run = True
@@ -44,15 +46,17 @@ def main():
 	nears = []
 	success_configurations = []
 	success_nears = []
-	configurations.append(x_init)
-	configurations.append(x_goal)
+	initial = graph_.draw_initial_node(map_=environment_.map)
+	goal = graph_.draw_goal_node(map_=environment_.map)
+	configurations.append(initial)
+	configurations.append(goal)
 	environment_.make_obstacles()
 	obstacles = environment_.draw_obstacles() if args.obstacles else []
 	graph_.obstacles = obstacles
 	is_simulation_finished = False
 	is_configuration_free = True
 
-	 # Number of nodes to put in the roadmap
+	# Number of nodes to put in the roadmap
 	n = 0
 
 	# Number of the closest neighbors to examine for each configuration
@@ -72,6 +76,7 @@ def main():
 		if collision_free and sampling:
 			if args.show_random_nodes:
 				graph_.draw_random_node(map_=environment_.map)
+
 			configurations.append(x_rand)
 			n += 1 # Counter for the maximum allowed nodes		
 
@@ -84,7 +89,9 @@ def main():
 					x_rand=configuration, configuration=configuration, k=k)
 
 				for i in range(k):
-					cross_obstacle = graph_.cross_obstacle(p1=configuration, p2=near[i])
+					cross_obstacle = graph_.cross_obstacle(configuration1=configuration,
+						configuration2=near[i], map_=environment_.map)
+					
 					if not cross_obstacle:
 						graph_.draw_local_planner(p1=configuration, p2=near[i],
 							map_=environment_.map)
@@ -94,8 +101,9 @@ def main():
 							success_configurations.append(configuration)
 							is_configuration_free = False
 
-				success_nears.append(nears)
-				nears = []			
+				if nears != []:
+					success_nears.append(nears)
+					nears = []			
 				is_configuration_free = True
 
 			graph_.a_star(nodes=configurations, map_=environment_.map)
@@ -103,7 +111,7 @@ def main():
 
 		if is_simulation_finished:
 			graph_.draw_trajectory(configurations=success_configurations, nears=success_nears, 
-				environment=environment_, obstacles=obstacles, k=k, keep_tree=args.keep_tree)
+				environment=environment_, obstacles=obstacles, k=k, keep_roadmap=args.keep_roadmap)
 
 		pygame.display.update()
 
