@@ -216,7 +216,6 @@ class Graph():
 				configuration2_copy.center = (x, y)
 
 				if rectangle.colliderect(configuration2_copy):
-					pygame.draw.circle(surface=map_, color=self.RED, center=configuration2_copy.center, radius=5)
 					return True
 
 		return False
@@ -291,20 +290,31 @@ class Graph():
 			current = came_from[current]
 			self.path_coordinates.append(current)
 
-		self.draw_path_to_goal(map_)
-	
-	def draw_path_to_goal(self, map_):
-		"""Draws the path from the x_goal node to the x_init node."""
+		self.generate_smooth_path()
+
+	def generate_smooth_path(self):
 		for i in range(len(self.path_coordinates)-1):
 			interpolation = self.interpolation(p1=self.path_coordinates[i],
 				p2=self.path_coordinates[i+1])
 			self.smooth_path.append(interpolation)
-			pygame.draw.line(surface=map_, color=(255, 0, 0), start_pos=self.path_coordinates[i],
-				end_pos=self.path_coordinates[i+1], width=4)
 
 		# Flat smooth path list
 		self.smooth = [coordinate for coordinates in self.smooth_path[::-1] for coordinate in coordinates]
 		self.smooth_path = []
+	
+	def draw_path_to_goal(self, map_, environment, obstacles):
+		"""Draws the path from the x_goal node to the x_init node."""
+		self.draw_initial_node(map_=map_)
+		self.draw_goal_node(map_=map_)
+
+		if obstacles != []:
+			environment.draw_obstacles()
+
+		for i in range(len(self.path_coordinates)-1):
+			pygame.draw.line(surface=map_, color=self.RED, start_pos=self.path_coordinates[i],
+				end_pos=self.path_coordinates[i+1], width=4)
+
+		self.refresh_screen(map_=environment.map, seconds=3)
 
 	def heuristic(self, p1, p2):
 		"""Heuristic distance from point to point."""
@@ -334,11 +344,28 @@ class Graph():
 		pygame.draw.circle(surface=map_, color=(0, 0, 255),	center=position, 
 			radius=self.robot_radius)
 
-	def draw_roadmap(self, configurations, nears, map_, k):
+	def draw_roadmap(self, configurations, nears, map_, k, is_constant=False):
 		"""Draws the roadmap constantly. Used to display it in an infinite loop."""
+		self.draw_initial_node(map_=map_)
+		self.draw_goal_node(map_=map_)
+
 		for i, near in enumerate(nears):
 			for j in range(len(near)):
 				self.draw_local_planner(p1=configurations[i], p2=nears[i][j], map_=map_)
+		
+		if is_constant:
+			return
+		else:
+			self.refresh_screen(map_=map_, seconds=3)
+
+	def refresh_screen(self, map_, seconds):
+		"""Updates the screen information and waits the given seconds."""
+		seconds = int(seconds * 1000)
+
+		# Refresh the screen
+		pygame.display.update()
+		pygame.time.delay(seconds)
+		map_.fill(self.WHITE)
 
 	def draw_trajectory(self, configurations, nears, environment, obstacles, k, keep_roadmap):
 		"""Draws the robot moving in the map."""
@@ -350,18 +377,12 @@ class Graph():
 
 			if keep_roadmap:
 				self.draw_roadmap(configurations=configurations, nears=nears, map_=environment.map,
-					k=k)
+					k=k, is_constant=True)
 
-			# Draw inital and final robot configuration
+			# Draw inital and final robot configuration constantly
 			self.draw_initial_node(map_=environment.map)
 			self.draw_goal_node(map_=environment.map)
 
-			
-			# Draw path to goal, and the robot movement
-			self.draw_path_to_goal(map_=environment.map)		
+			# Draw path to goal, and the robot movement constantly
 			self.move_robot(position=robot_position, map_=environment.map)
-
-			# Refresh the screen
-			pygame.display.update()
-			pygame.time.delay(20)
-			environment.map.fill(self.WHITE)
+			self.refresh_screen(map_=environment.map, seconds=0.02)

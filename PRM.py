@@ -110,8 +110,12 @@ def main():
 			is_simulation_finished = True
 
 		if is_simulation_finished:
+			graph_.draw_roadmap(configurations=success_configurations, nears=success_nears, 
+				map_=environment_.map, k=k)
 			graph_.draw_trajectory(configurations=success_configurations, nears=success_nears, 
 				environment=environment_, obstacles=obstacles, k=k, keep_roadmap=args.keep_roadmap)
+			graph_.draw_path_to_goal(map_=environment_.map, environment=environment_,
+				 obstacles=obstacles)
 
 		pygame.display.update()
 
