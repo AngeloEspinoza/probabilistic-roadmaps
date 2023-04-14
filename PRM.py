@@ -36,8 +36,7 @@ x_goal = tuple(args.x_goal) if args.x_goal is not None else (540, 380)
 
 # Instantiating the environment and the graph
 environment_ = environment.Environment(map_dimensions=MAP_DIMENSIONS)
-graph_ = graph.Graph(start=x_init, goal=x_goal, 
-		map_dimensions=MAP_DIMENSIONS, radius=args.radius)
+graph_ = graph.Graph(start=x_init, goal=x_goal, map_dimensions=MAP_DIMENSIONS, radius=args.radius)
 
 def main():
 	run = True

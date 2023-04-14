@@ -121,7 +121,7 @@ class Graph():
 		x_rand : tuple 
 			Coordinate of the random node generated.
 		configuration : tuple
-			Current configuration to be search its k-neighbors.
+			Current configuration to search its k-neighbors.
 		k : int
 			Number of the closest neighbors to examine for each configuration.
 
@@ -164,6 +164,23 @@ class Graph():
 		return near_configurations
 
 	def interpolation(self, p1, p2):
+		"""Interpolates a line.
+
+		Given an ordered pair of initial point p1 and an
+		end point p2, it computes points between p1 and p2.
+
+		Parameters
+		----------
+		p1 : tuple
+			Initial Point.
+		p2 : tuple
+			End Point.
+
+		Returns
+		-------
+		list
+			Coordinates of the points resulted by the interpolation.
+		"""
 		p11, p12 = p1[0], p1[1]
 		p21, p22 = p2[0], p2[1]
 		coordinates = []
@@ -189,6 +206,8 @@ class Graph():
 			Initial configuration.
 		configuration2 : tuple 
 			End configuration.
+		map_ : pygame.Surface
+			Environment to draw on.
 
 		Returns
 		-------
@@ -235,9 +254,8 @@ class Graph():
 			Environment to draw on.
 		"""		
 		open_set = queue.PriorityQueue()
-		open_set.put((0, self.x_init)) # (f_score, start)
+		open_set.put((0, self.x_init)) # (f-score, start)
 		came_from = {}
-		last_current = (0, 0)
 
 		# Initialize to infinity all g-score and f-score nodes but the start 
 		g_score = {node.center: float('inf') for node in nodes}
@@ -248,8 +266,8 @@ class Graph():
 
 		while not open_set.empty(): 
 			current = open_set.get()[1]
-			open_set_hash.remove(current)
 
+			open_set_hash.remove(current)
 			# Get the correspondant rectangle of the center point for the current configuration
 			for node in nodes:
 				if node.center == current:
@@ -268,7 +286,8 @@ class Graph():
 						neighbor_ = node
 
 				temp_g_score = g_score[current] + self.euclidean_distance(current, neighbor)
-				cross_obstacle = self.cross_obstacle(configuration1=current_, configuration2=neighbor_, map_=map_)
+				cross_obstacle = self.cross_obstacle(configuration1=current_, 
+					configuration2=neighbor_, map_=map_)
 
 				if temp_g_score < g_score[neighbor] and not cross_obstacle:
 					came_from[neighbor] = current
@@ -278,8 +297,6 @@ class Graph():
 					if neighbor not in open_set_hash:
 						open_set.put((f_score[neighbor], neighbor))
 						open_set_hash.add(neighbor)
-
-				last_current = current
 
 	def reconstruct_path(self, came_from, current, map_):
 		"""Reconstruct the path from point A to B."""
@@ -299,7 +316,7 @@ class Graph():
 			self.smooth_path.append(interpolation)
 
 		# Flat smooth path list
-		self.smooth = [coordinate for coordinates in self.smooth_path[::-1] for coordinate in coordinates]
+		self.smooth = [coord for coords in self.smooth_path[::-1] for coord in coords]
 		self.smooth_path = []
 	
 	def draw_path_to_goal(self, map_, environment, obstacles):
@@ -344,7 +361,7 @@ class Graph():
 		pygame.draw.circle(surface=map_, color=(0, 0, 255),	center=position, 
 			radius=self.robot_radius)
 
-	def draw_roadmap(self, configurations, nears, map_, k, is_constant=False):
+	def draw_roadmap(self, configurations, nears, map_, k):
 		"""Draws the roadmap constantly. Used to display it in an infinite loop."""
 		self.draw_initial_node(map_=map_)
 		self.draw_goal_node(map_=map_)
@@ -352,11 +369,6 @@ class Graph():
 		for i, near in enumerate(nears):
 			for j in range(len(near)):
 				self.draw_local_planner(p1=configurations[i], p2=nears[i][j], map_=map_)
-		
-		if is_constant:
-			return
-		else:
-			self.refresh_screen(map_=map_, seconds=3)
 
 	def refresh_screen(self, map_, seconds):
 		"""Updates the screen information and waits the given seconds."""
@@ -377,7 +389,7 @@ class Graph():
 
 			if keep_roadmap:
 				self.draw_roadmap(configurations=configurations, nears=nears, map_=environment.map,
-					k=k, is_constant=True)
+					k=k)
 
 			# Draw inital and final robot configuration constantly
 			self.draw_initial_node(map_=environment.map)
