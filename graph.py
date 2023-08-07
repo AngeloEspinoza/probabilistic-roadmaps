@@ -11,9 +11,9 @@ class Graph():
 	Attributes
 	----------
 	start : tuple
-		Initial position of the tree in X and Y respectively.
+		Initial position of the graph in X and Y respectively.
 	goal : tuple
-		End position of the tree in X and Y respectively.
+		End position of the graph in X and Y respectively.
 	map_dimensions : tuple
 		Map width and height in pixels.
 	"""
@@ -40,7 +40,7 @@ class Graph():
 		self.TURQUOISE = (64, 224, 208)
 		self.FUCSIA = (255, 0, 255)
 
-	def is_free(self, point, obstacles, tree=None):
+	def is_free(self, point, obstacles):
 		"""Checks if a configuration is colliding with an obstacle.
 
 		When dealing with obstacles it is necessary to check 
@@ -52,8 +52,6 @@ class Graph():
 			Point to be checked.
 		obstacles : pygame.Rect
 			Rectangle obstacle.
-		tree : list
-			Tree containing all the coordinate nodes.
 
 		Returns
 		-------
@@ -172,9 +170,9 @@ class Graph():
 		Parameters
 		----------
 		p1 : tuple
-			Initial Point.
+			Initial point.
 		p2 : tuple
-			End Point.
+			End point.
 
 		Returns
 		-------
@@ -276,7 +274,7 @@ class Graph():
 			if current == self.x_goal:
 				self.reconstruct_path(came_from, current, map_)
 				return True
-			
+
 			# k-nearest
 			for neighbor in self.neighbors[current]:
 				# Get the correspondant rectangle of the center point for the 
@@ -310,6 +308,7 @@ class Graph():
 		self.generate_smooth_path()
 
 	def generate_smooth_path(self):
+		"""Sections the path the pieces by interpolating."""
 		for i in range(len(self.path_coordinates)-1):
 			interpolation = self.interpolation(p1=self.path_coordinates[i],
 				p2=self.path_coordinates[i+1])
@@ -321,15 +320,15 @@ class Graph():
 	
 	def draw_path_to_goal(self, map_, environment, obstacles):
 		"""Draws the path from the x_goal node to the x_init node."""
-		self.draw_initial_node(map_=map_)
-		self.draw_goal_node(map_=map_)
+		self.draw_initial_node(map_=environment.map)
+		self.draw_goal_node(map_=environment.map)
 
 		if obstacles != []:
 			environment.draw_obstacles()
 
 		for i in range(len(self.path_coordinates)-1):
-			pygame.draw.line(surface=map_, color=self.RED, start_pos=self.path_coordinates[i],
-				end_pos=self.path_coordinates[i+1], width=4)
+			pygame.draw.line(surface=environment.map, color=self.RED, \
+				start_pos=self.path_coordinates[i], end_pos=self.path_coordinates[i+1], width=4)
 
 		self.refresh_screen(map_=environment.map, seconds=3)
 

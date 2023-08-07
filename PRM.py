@@ -18,7 +18,7 @@ parser.add_argument('-n', '--nodes', type=int, metavar='', required=False, defau
 	help='Number of nodes to put in the roadmap')
 parser.add_argument('-k', '--k_nearest', type=int, metavar='', required=False,
 	help='Number of the closest neighbors to examine for each configuration')
-parser.add_argument('-kt', '--keep_roadmap', type=bool, action=argparse.BooleanOptionalAction, 
+parser.add_argument('-kr', '--keep_roadmap', type=bool, action=argparse.BooleanOptionalAction,
 	metavar='', required=False, help='Keeps the tree while the robot is moving towards the goal')
 parser.add_argument('-r', '--radius', type=int, metavar='', required=False, default=10,
 	help='Set the robot radius')
