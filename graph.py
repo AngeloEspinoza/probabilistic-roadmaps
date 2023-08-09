@@ -353,7 +353,10 @@ class Graph():
 
 	def draw_local_planner(self, p1, p2, map_):
 		"""Draws the local planner from node to node."""
-		pygame.draw.line(surface=map_, color=self.BLACK, start_pos=p1.center, end_pos=p2.center)
+		try:
+			pygame.draw.line(surface=map_, color=self.BLACK, start_pos=p1.center, end_pos=p2.center)
+		except AttributeError:
+			pygame.draw.line(surface=map_, color=self.BLACK, start_pos=p1, end_pos=p2)
 
 	def move_robot(self, position, map_):
 		"""Draws the robot moving at the given position."""
@@ -365,9 +368,9 @@ class Graph():
 		self.draw_initial_node(map_=map_)
 		self.draw_goal_node(map_=map_)
 
-		for i, near in enumerate(nears):
-			for j in range(len(near)):
-				self.draw_local_planner(p1=configurations[i], p2=nears[i][j], map_=map_)
+		for node, neighbors in self.neighbors.items():
+			for neighbor in neighbors:
+				self.draw_local_planner(p1=node, p2=neighbor, map_=map_)
 
 	def refresh_screen(self, map_, seconds):
 		"""Updates the screen information and waits the given seconds."""
